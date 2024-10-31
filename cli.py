@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 
 import settings
-from quiniela import models, io
+from quiniela import data_preprocessing, models, io
 
 
 def parse_seasons(value):
@@ -79,6 +79,7 @@ if __name__ == "__main__":
         logging.info(f"Training LaQuiniela model with seasons {args.training_seasons}")
         model = models.QuinielaModel()
         training_data = io.load_historical_data(args.training_seasons)
+        training_data = training_data.data_preprocessing.generate_features(training_data)
         model.train(training_data)
         model.save(settings.MODELS_PATH / args.model_name)
         print(f"Model succesfully trained and saved in {settings.MODELS_PATH / args.model_name}")
