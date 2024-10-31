@@ -96,10 +96,10 @@ def generate_features(df):
 
 def get_X_y(df):
     y = df.loc[:,'result']
-    cols_to_drop = ['score','home_score','away_score','result']
+    cols_to_drop = ['score','home_score','away_score','result','date', 'time']
     X = df.drop(columns=cols_to_drop)
-    X = X.drop(columns=['date', 'time'])
-    
+    X = pd.get_dummies(X, columns=['season','home_team','away_team'])
+
     return X, y
 
 
