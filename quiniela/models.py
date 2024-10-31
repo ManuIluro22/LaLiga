@@ -7,6 +7,7 @@ class QuinielaModel:
 
     def train(self, train_data):
         # Do something here to train the model
+        """ Train a ML model from the train data """
         X, y = get_X_y(train_data)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
         model = GradientBoostingClassifier()
