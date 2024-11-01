@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 
-import pandas as pd
-import numpy as np
+from feature_generation import FeatureGenerator
 
 class QuinielaDataframe:
 
@@ -12,6 +11,16 @@ class QuinielaDataframe:
         self._clean_data()
         self._generate_team_info()
 
+    def generate_features(self, list_features=[]):
+
+        feature_generator = FeatureGenerator()
+        feature_generator.apply_features(self, list_features)
+
+    def generate_matchday_dataframe(self):
+        
+        return MatchdayDataframe(self)
+    
+    
     def _clean_data(self):
 
         self.df[['home_score', 'away_score']] = self.df['score'].str.split(':', expand=True)
@@ -22,14 +31,7 @@ class QuinielaDataframe:
                                           else '2' if row['home_score'] < row['away_score']
                                           else 'X', axis=1)
         
-        self.df['date'] = pd.to_datetime(self.df['date'], format='%m/%d/%y')
-        self.df['weekday'] = self.df['date'].dt.day_name()
-        self.df['weekday_num'] = self.df['date'].dt.dayofweek
-
-    def generate_features(self, list_features=None):
-
-        feature_generator = FeatureGenerator()
-        feature_generator.apply_features(self, list_features)
+        self.df["season"] = pd.to_numeric(self.df["season"].str[-4:])
 
     def _generate_team_info(self):
 
@@ -69,90 +71,68 @@ class QuinielaDataframe:
         self.match_standings.insert(3, 'rank', self.match_standings.groupby(['season', 'division', 'matchday'])['Pts']
                                     .rank(ascending=False, method='first'))
 
-class FeatureGenerator:
+
+class MatchdayDataframe:
     
-
-    def apply_features(self, quiniela_df, list_features=None):
-
-        if list_features is None or 'avg_goals' in list_features:
-            self._avg_goals(quiniela_df)
-        if list_features is None or 'last_n_matchdays' in list_features:
-            self._last_n_matchdays(quiniela_df)
-        if list_features is None or 'rank_n_last_seasons' in list_features:
-            self._last_n_ranks(quiniela_df)
-
-    def _last_n_ranks(self,quiniela_df,n=5):
-
-        last_game_rankings = quiniela_df.match_standings.sort_values(by=['season', 'division', 'team', 'matchday']).groupby(['season', 'division', 'team']).last().reset_index()
-        last_game_rankings.loc[last_game_rankings['division'] == 2, 'rank'] += 20
-        last_game_rankings["rank_n_last_seasons"] = last_game_rankings.groupby('team')['rank'].transform(lambda x: x.rolling(window=5,min_periods=1).mean())
-        last_game_rankings["season"] = last_game_rankings["season"] + 1
-        quiniela_df.match_standings = quiniela_df.match_standings.merge(
-            last_game_rankings[['season', 'division', 'team', 'rank_n_last_seasons']],
-            on=['season', 'division', 'team'],
-            how='left'
-        )
-
-        self._fill_missing_ranks(quiniela_df.match_standings)
-
-
-    def _fill_missing_ranks(self,match_standings):
+    def __init__(self, quiniela_df,versus_features = True):
         
+        self.df = quiniela_df.df.copy()
+        self.matchday_df = quiniela_df.match_standings.copy()
+        self._prepare_matchday_stats()
+
+        if(versus_features):
+            feature_generator = FeatureGenerator()
+            feature_generator.apply_features(self, ['versus_features'])
+
+        self._clean_df()
+
+    def _prepare_matchday_stats(self):
+
+        home_stats = self.matchday_df[['season', 'division', 'matchday', 'team', 'rank', 
+                                                       'avg_GF', 'avg_GA', 'home_avg_GF', 'home_avg_GA', 
+                                                       'avg_last_points','rank_n_last_seasons']]
         
-        max_rank_by_season = match_standings.groupby(['season', 'division'])['rank'].max().reset_index()
-        max_rank_by_season.columns = ['season', 'division', 'max_rank']
+        away_stats = self.matchday_df[['season', 'division', 'matchday', 'team', 'rank', 
+                                                       'avg_GF', 'avg_GA', 'away_avg_GF', 'away_avg_GA', 
+                                                       'avg_last_points','rank_n_last_seasons']]
+
+        home_stats = home_stats.rename(columns={
+            'team': 'home_team',
+            'rank': 'home_rank',
+            'avg_GF': 'home_total_avg_GF',
+            'avg_GA': 'home_total_avg_GA',
+            'home_avg_GF': 'home_GF_avg',
+            'home_avg_GA': 'home_GA_avg',
+            'avg_last_points': 'home_avg_points_last_5',
+            'rank_n_last_seasons' : 'home_rank_5_last_seasons'
+        })
+
+        away_stats = away_stats.rename(columns={
+            'team': 'away_team',
+            'rank': 'away_rank',
+            'avg_GF': 'away_total_avg_GF',
+            'avg_GA': 'away_total_avg_GA',
+            'away_avg_GF': 'away_GF_avg',
+            'away_avg_GA': 'away_GA_avg',
+            'avg_last_points': 'away_avg_points_last_5',
+            'rank_n_last_seasons' : 'away_rank_5_last_seasons'
+
+        })
         
-        max_rank_div1_by_season = match_standings[match_standings['division'] == 1].groupby('season')['rank'].max().reset_index()
-        max_rank_div1_by_season.columns = ['season', 'max_rank_div1']
+        self._adjust_matchday(home_stats,away_stats)
 
-        match_standings = match_standings.merge(max_rank_by_season, on=['season', 'division'], how='left')
-        match_standings = match_standings.merge(max_rank_div1_by_season, on='season', how='left')
-
-        match_standings['rank_n_last_seasons'] = np.where(
-            match_standings['rank_n_last_seasons'].isna(),
-            np.where(
-                match_standings['season'] == 1929, 
-                0, 
-                np.where(
-                    match_standings['division'] == 2,
-                    match_standings['max_rank_div1'] + match_standings['max_rank'] + 1,
-                    match_standings['max_rank'] + 1  
-                )
-            ),
-            match_standings['rank_n_last_seasons']
-        )
+    def _adjust_matchday(self,home_stats,away_stats):
         
-        match_standings.drop(columns=['max_rank', 'max_rank_div1'],inplace=True)
-        print(match_standings.sort_values(by=['season', 'division', 'matchday', 'Pts', 'GD', 'GF'],
-                                                                ascending=[True, True, True, False, False, False]))
-
-    def _avg_goals(self, quiniela_df):
-
-        quiniela_df.match_standings['home_avg_GF'] = quiniela_df.match_standings['home_GF'] / quiniela_df.match_standings['matchday']
-        quiniela_df.match_standings['home_avg_GA'] = quiniela_df.match_standings['home_GA'] / quiniela_df.match_standings['matchday']
-        quiniela_df.match_standings['away_avg_GF'] = quiniela_df.match_standings['away_GF'] / quiniela_df.match_standings['matchday']
-        quiniela_df.match_standings['away_avg_GA'] = quiniela_df.match_standings['away_GA'] / quiniela_df.match_standings['matchday']
-        quiniela_df.match_standings['avg_GF'] = quiniela_df.match_standings['GF'] / quiniela_df.match_standings['matchday']
-        quiniela_df.match_standings['avg_GA'] = quiniela_df.match_standings['GA'] / quiniela_df.match_standings['matchday']
-
-    def _last_n_matchdays(self, quiniela_df, n=5):
-
-        quiniela_df.team_results['result'] = quiniela_df.team_results.apply(
-            lambda row: 'W' if row['W'] == 1 else 'L' if row['L'] == 1 else 'T', axis=1
-        )
-        quiniela_df.team_results.sort_values(['season', 'division', 'team', 'matchday'], inplace=True)
+        self.df["matchday"] = self.df["matchday"] - 1
         
-        last_results = quiniela_df.team_results.groupby(['season', 'division', 'team'])['result'].apply(
-            lambda x: np.array([np.array(rolling_list) for rolling_list in x.rolling(n)], dtype=object)
-        )
-        last_results = np.concatenate(last_results.values).reshape(-1)
+        self.df = self.df.merge(home_stats, on=['season', 'division', 'matchday', 'home_team'], how='left')
+        self.df = self.df.merge(away_stats, on=['season', 'division', 'matchday', 'away_team'], how='left')
         
-        quiniela_df.match_standings.sort_values(['season', 'division', 'team', 'matchday'], inplace=True)
-        quiniela_df.match_standings.reset_index(inplace=True)
-        quiniela_df.match_standings["avg_last_points"] = pd.Series(last_results).apply(self._calculate_avg_points)
+        self.df["matchday"] = self.df["matchday"] + 1
 
-    def _calculate_avg_points(self, last_n):
-
-        points = {'W': 3, 'T': 1, 'L': 0}
-        total_points = np.mean([points[res] for res in last_n if res in points])
-        return total_points if len(last_n) > 0 else 0
+    def _clean_df(self):
+        
+        self.df.drop(['date', 'time',
+       'score', 'home_score', 'away_score', 'home_W',
+       'home_L', 'home_T', 'away_W', 'away_L', 'away_T'],axis=1,
+       inplace=True)
