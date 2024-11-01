@@ -102,6 +102,17 @@ def calculate_live_rank(df):
 # --> I think we should split this into smaller chunks and then nest
 # --  into a main feature
 
+def get_scores(df):
+    df[['home_score', 'away_score']] = df['score'].str.split(':', expand=True)
+    df['home_score'] = pd.to_numeric(df['home_score'])
+    df['away_score'] = pd.to_numeric(df['away_score'])
+    df['result'] = df.apply(lambda row: '1' if row['home_score'] > row['away_score']
+                                            else '2' if row['home_score'] < row['away_score']
+                                            else 'X', axis=1)    
+    
+    return df
+
+
 def calculate_goals_scored(df):
     home_goals = df.groupby('home_team')['home_score'].sum().reset_index()
     home_goals.columns = ['team', 'home_goals_team_home']
@@ -182,6 +193,7 @@ def calculate_goal_diff(df):
 
 def generate_features(df):
     # Include remaining features
+    df = get_scores(df)
     df = calculate_goals_scored(df)
     df = calculate_goals_conceded(df)
     df = calculate_appearances(df)
