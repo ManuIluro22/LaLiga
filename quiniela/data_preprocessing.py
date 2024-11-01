@@ -163,9 +163,9 @@ def generate_features(df):
 
     # Include remaining features
     
-    calculate_form_10_game(df)
-    calculate_gd_5_game(df)
-    calculate_live_rank(df)
+    #df = calculate_form_10_game(df)
+    #df = calculate_gd_5_game(df)
+    #df = calculate_live_rank(df)
 
     return df
 

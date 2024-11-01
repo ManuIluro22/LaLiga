@@ -1,13 +1,13 @@
 import pickle
-from quiniela.data_preprocessing import get_X_y, clean_data, generate_features
+from quiniela.data_preprocessing import clean_data, generate_features, get_X_y
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 
 class QuinielaModel:
 
     def train(self, train_data):
-        clean_data(train_data)
-        generate_features(train_data)
+        train_data = clean_data(train_data)
+        train_data = generate_features(train_data)
         # Do something here to train the model
         # --> Do we need to include the test args here??
         """ Train a ML model from the train data """
