@@ -101,29 +101,44 @@ def calculate_live_rank(df):
 
 # --> I think we should split this into smaller chunks and then nest
 # --  into a main feature
-def generate_features(df):
-    # Calculate home and away goals for each team
+
+def calculate_goals_scored(df):
     home_goals = df.groupby('home_team')['home_score'].sum().reset_index()
-    home_goals.columns = ['team', 'home_goals']
+    home_goals.columns = ['team', 'home_goals_team_home']
+    
     away_goals = df.groupby('away_team')['away_score'].sum().reset_index()
-    away_goals.columns = ['team', 'away_goals']
+    away_goals.columns = ['team', 'away_goals_team_away']
 
     # Merge home and away goals to get total goals
     all_time = pd.merge(home_goals, away_goals, on='team', how='outer').fillna(0)
-    all_time['total_goals'] = all_time['home_goals'] + all_time['away_goals']
+    all_time['total_goals'] = all_time['home_goals_team_home'] + all_time['away_goals_team_away']
 
-    # Calculate home and away concedes for each team
+    df = df.merge(all_time[['team','home_goals_team_home','total_goals']],
+                  left_on='home_team', right_on='team', how='outer').fillna(0)
+    df = df.merge(all_time[['team','away_goals_team_away','total_goals']],
+                  left_on='away_team', right_on='team', suffixes=('_home', '_away'), how='outer').fillna(0)
+    df = df.drop(['team_home', 'team_away'], axis=1)
+    return df
+
+
+def calculate_goals_conceded(df):
     home_conceding = df.groupby('home_team')['away_score'].sum().reset_index()
-    home_conceding.columns = ['team', 'concedes_home']
+    home_conceding.columns = ['team', 'home_concedes_team_home']
     away_conceding = df.groupby('away_team')['home_score'].sum().reset_index()
-    away_conceding.columns = ['team', 'concedes_away']
+    away_conceding.columns = ['team', 'away_concedes_team_away']
 
     # Merge conceding data with total goals data
     all_time_concedes = pd.merge(home_conceding, away_conceding, on='team', how='outer').fillna(0)
-    all_time_concedes['total_concedes'] = all_time_concedes['concedes_home'] + all_time_concedes['concedes_away']
-    all_time = pd.merge(all_time, all_time_concedes, on='team', how='outer').fillna(0)
+    all_time_concedes['total_concedes'] = all_time_concedes['home_concedes_team_home'] + all_time_concedes['away_concedes_team_away']
 
-    # Compute game appearances for home and away
+    df = df.merge(all_time_concedes[['team','home_concedes_team_home','total_concedes']],
+                  left_on='home_team', right_on='team', how='outer').fillna(0)
+    df = df.merge(all_time_concedes[['team','away_concedes_team_away','total_concedes']],
+                  left_on='away_team', right_on='team', suffixes=('_home', '_away'), how='outer').fillna(0)
+    df = df.drop(['team_home', 'team_away'], axis=1)
+    return df
+
+def calculate_appearances(df):
     home_counts = df['home_team'].value_counts()
     away_counts = df['away_team'].value_counts()
     total_counts = home_counts.add(away_counts, fill_value=0)
@@ -133,39 +148,46 @@ def generate_features(df):
     df['home_app_total'] = df['home_team'].map(total_counts)
     df['away_app_away'] = df['away_team'].map(away_counts)
     df['away_app_total'] = df['away_team'].map(total_counts)
+    
+    return df
 
-    # Merge stats onto the DataFrame
-    df = df.merge(all_time[['team', 'home_goals', 'total_goals', 'concedes_home', 'total_concedes']],
-                  left_on='home_team', right_on='team', how='outer').fillna(0)
-    df = df.merge(all_time[['team', 'away_goals', 'total_goals','concedes_away', 'total_concedes']],
-                  left_on='away_team', right_on='team', suffixes=('_home', '_away'), how='outer').fillna(0)
-    df = df.drop(['team_home', 'team_away'], axis=1)
 
-    # Calculate scoring and conceding ratios
-    df['home_goals_ratio'] = df['home_goals'] / df['home_app_home']
-    df['away_goals_ratio'] = df['away_goals'] / df['away_app_away']
+def calculate_scor_conced_ratio(df):
+    df['home_goals_ratio'] = df['home_goals_team_home'] / df['home_app_home']
+    df['away_goals_ratio'] = df['away_goals_team_away'] / df['away_app_away']
     df['total_goals_home_ratio'] = df['total_goals_home'] / df['home_app_total']
     df['total_goals_away_ratio'] = df['total_goals_away'] / df['away_app_total']
-    df['concedes_home_ratio'] = df['concedes_home'] / df['home_app_home']
-    df['concedes_away_ratio'] = df['concedes_away'] / df['away_app_away']
+    df['concedes_home_ratio'] = df['home_concedes_team_home'] / df['home_app_home']
+    df['concedes_away_ratio'] = df['away_concedes_team_away'] / df['away_app_away']
     df['total_concedes_home_ratio'] = df['total_concedes_home'] / df['home_app_total']
     df['total_concedes_away_ratio'] = df['total_concedes_away'] / df['away_app_total']
     
-    # Calculate goal differences
-    df['goal_diff_home'] = df['home_goals'] - df['concedes_home']
+    return df
+
+
+def calculate_goal_diff(df):
+    df['goal_diff_home'] = df['home_goals_team_home'] - df['home_concedes_team_home']
     df['goal_diff_home_total'] = df['total_goals_home'] - df['total_concedes_home']
-    df['goal_diff_away'] = df['away_goals'] - df['concedes_away']
+    df['goal_diff_away'] = df['away_goals_team_away'] - df['away_concedes_team_away']
     df['goal_diff_away_total'] = df['total_goals_away'] - df['total_concedes_away']
     df['goal_diff_home_ratio'] = df['home_goals_ratio'] - df['concedes_home_ratio']
     df['goal_diff_home_total_ratio'] = df['total_goals_home_ratio'] - df['total_concedes_home_ratio']
     df['goal_diff_away_ratio'] = df['away_goals_ratio'] - df['concedes_away_ratio']
     df['goal_diff_away_total_ratio'] = df['total_goals_away_ratio'] - df['total_concedes_away_ratio']
 
+    return df
+
+
+def generate_features(df):
     # Include remaining features
-    
-    #df = calculate_form_10_game(df)
-    #df = calculate_gd_5_game(df)
-    #df = calculate_live_rank(df)
+    df = calculate_goals_scored(df)
+    df = calculate_goals_conceded(df)
+    df = calculate_appearances(df)
+    df = calculate_scor_conced_ratio(df)
+    df = calculate_goal_diff(df)
+    df = calculate_form_10_game(df)
+    df = calculate_gd_5_game(df)
+    df = calculate_live_rank(df)
 
     return df
 
