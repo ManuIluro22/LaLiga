@@ -1,7 +1,7 @@
 import pickle
 from quiniela.data_preprocessing import clean_data, generate_features, get_X_y
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 class QuinielaModel:
 
@@ -13,7 +13,7 @@ class QuinielaModel:
         """ Train a ML model from the train data """
         X, y = get_X_y(train_data)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
-        model = GradientBoostingClassifier()
+        model = HistGradientBoostingClassifier()
         model.fit(X_train, y_train)
         return model
 
