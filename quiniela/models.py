@@ -1,5 +1,5 @@
 import pickle
-from quiniela.data_preprocessing import get_X_y
+from quiniela.data_preprocessing import get_X_y, clean_data, generate_features
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 
