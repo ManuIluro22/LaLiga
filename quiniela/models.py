@@ -18,8 +18,15 @@ class QuinielaModel:
         return model
 
     def predict(self, predict_data):
-        # Do something here to predict
-        return ["X" for _ in range(len(predict_data))]
+        predict_data = clean_data(predict_data)
+        predict_data = generate_features(predict_data)
+        predict_string = predict_data[
+        (predict_data['result'] != 0) & 
+        (predict_data['result'] != '0') | 
+        (predict_data['result'] == 'X')
+    ]['result'].astype(str).tolist()
+         
+        return predict_string
 
     @classmethod
     def load(cls, filename):
