@@ -118,6 +118,7 @@ def calculate_goals_scored(df):
     df = df.merge(all_time[['team','away_goals_team_away','total_goals']],
                   left_on='away_team', right_on='team', suffixes=('_home', '_away'), how='outer').fillna(0)
     df = df.drop(['team_home', 'team_away'], axis=1)
+    
     return df
 
 
@@ -137,6 +138,7 @@ def calculate_goals_conceded(df):
                   left_on='away_team', right_on='team', suffixes=('_home', '_away'), how='outer').fillna(0)
     df = df.drop(['team_home', 'team_away'], axis=1)
     return df
+
 
 def calculate_appearances(df):
     home_counts = df['home_team'].value_counts()
