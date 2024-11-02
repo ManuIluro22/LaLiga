@@ -4,6 +4,7 @@ import settings
 from quiniela.structure import LaLigaDataframe
 
 def load_matchday(season, division, matchday):
+    print(f"Loading matchday {matchday} in season {season}, division {division}...")
     with sqlite3.connect(settings.DATABASE_PATH) as conn:
         data = pd.read_sql_query("SELECT * FROM Matches", conn)
     if data.empty:
@@ -11,13 +12,12 @@ def load_matchday(season, division, matchday):
     master = LaLigaDataframe(data.copy())
     master.generate_features()
     final = master.generate_matchday_dataframe()
-    matchday = final.df.loc[
+    season = int(season.split(":")[1])
+    predict_data = final.df.loc[
         (final.df.season == season) & 
         (final.df.division == division) &
         (final.df.matchday == matchday)]
-    
-    print(matchday)
-    return final.df
+    return predict_data
 
 
 
