@@ -8,6 +8,8 @@ from quiniela import data_preprocessing, models, io
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.preprocessing import LabelEncoder
 from quiniela.structure import LaLigaDataframe
+from warnings import simplefilter
+simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 def parse_seasons(value):
     if value == "all":
