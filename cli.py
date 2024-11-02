@@ -2,10 +2,12 @@
 import logging
 import argparse
 from datetime import datetime
-
+import pandas as pd
 import settings
 from quiniela import data_preprocessing, models, io
-
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.preprocessing import LabelEncoder
+from quiniela.structure import LaLigaDataframe
 
 def parse_seasons(value):
     if value == "all":
@@ -84,15 +86,67 @@ if __name__ == "__main__":
         print(f"Model succesfully trained and saved in {settings.MODELS_PATH / args.model_name}")
     if args.task == "predict":
         logging.info(f"Predicting matchday {args.matchday} in season {args.season}, division {args.division}")
-        model = models.QuinielaModel.load(settings.MODELS_PATH / args.model_name)
+        #loaded_model = models.QuinielaModel.load(settings.MODELS_PATH / args.model_name)
+        
         predict_data = io.load_matchday(args.season, args.division, args.matchday)
-        print("-" * 40, "\nData successfully loaded and processed.\n", "-" * 40)
-        #print("-" * 40)
-        print(predict_data.head())
-        predict_data['pred'] = model.predict(predict_data)
-        print(f"Matchday {args.matchday} - LaLiga - Division {args.division} - Season {args.season}")
+        print("\n Data successfully loaded and processed.\n")
+        
+        training_data = io.load_historical_data("all")
+        master = LaLigaDataframe(training_data.copy())
+        master.generate_features()
+        final = master.generate_matchday_dataframe()
+        X_train = final.df.drop(columns=['result'])
+        y_train = final.df['result']
+
+        home_encoder = LabelEncoder()
+        away_encoder = LabelEncoder()
+
+        predict_data['home_team_orig'] = predict_data['home_team']
+        predict_data['away_team_orig'] = predict_data['away_team']
+
+        predict_data['home_team_orig'] = predict_data['home_team']
+        predict_data['away_team_orig'] = predict_data['away_team']
+
+        # Separate training data
+        training_data = final.df.copy()
+
+        # Convert 'X' to 0 in the result column
+        training_data['result'] = training_data['result'].replace('X', 0)
+        training_data['result'] = training_data['result'].astype(int)
+
+        # Prepare features for training
+        X_train = training_data.drop(columns=['result'])
+        y_train = training_data['result']
+
+        # Encode team names
+        X_train['home_team'] = home_encoder.fit_transform(X_train['home_team'])
+        X_train['away_team'] = away_encoder.fit_transform(X_train['away_team'])
+        X_train = pd.get_dummies(X_train, columns=['season'])
+
+        # Prepare prediction data
+        predict_data['home_team'] = home_encoder.transform(predict_data['home_team'])
+        predict_data['away_team'] = away_encoder.transform(predict_data['away_team'])
+        X_pred = predict_data
+
+        # Ensure prediction data has same columns as training data
+        missing_cols = set(X_train.columns) - set(X_pred.columns)
+        for col in missing_cols:
+            X_pred[col] = 0
+        X_pred = X_pred[X_train.columns]
+
+        # Train and predict
+        model = HistGradientBoostingClassifier(max_iter=100, learning_rate=0.1, max_depth=5)
+        model.fit(X_train, y_train)
+        predict_data['pred'] = model.predict(X_pred)
+
+        # Display results
         print("=" * 70)
+        print("Predicted results: ")
+        print("(1 = home win, 2 = away win, X = tie)")
+        print("=" * 70)
+
         for _, row in predict_data.iterrows():
-            print(f"{row['home_team']:^30s} vs {row['away_team']:^30s} --> {row['pred']}")
-        #io.save_predictions(predict_data)
+            result = "1" if row['pred'] == 1 else "2" if row['pred'] == 2 else "X"
+            print(f"{row['home_team_orig']:^30s} vs {row['away_team_orig']:^30s} --> {result}")
+        print("=" * 70)
         
