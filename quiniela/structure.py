@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from quiniela.feature_generation import FeatureGenerator
 
 
 class LaLigaDataframe:
