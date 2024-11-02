@@ -1,25 +1,30 @@
 import pickle
-from quiniela.data_preprocessing import clean_data, generate_features, get_X_y
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import HistGradientBoostingClassifier
+from quiniela.feature_generation import FeatureGenerator
+from quiniela.structure import LaLigaDataframe, MatchdayDataframe
 
 class QuinielaModel:
 
     def train(self, train_data):
-        train_data = clean_data(train_data)
-        train_data = generate_features(train_data)
-        # Do something here to train the model
-        # --> Do we need to include the test args here??
-        """ Train a ML model from the train data """
-        X, y = get_X_y(train_data)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+        master = LaLigaDataframe(train_data.copy())
+        master.generate_features()
+        final = master.generate_matchday_dataframe()
+        print("=" * 70)
+        print(final.df.head())
+
+        y_train = master.df.loc[:,'result']
+        X_train = master.df.drop(columns=['score','home_score','away_score','result','date', 'time'])
+        X_train = pd.get_dummies(X_train, columns=['season','home_team','away_team'])
+        
         model = HistGradientBoostingClassifier()
         model.fit(X_train, y_train)
+        
         return model
 
     def predict(self, predict_data):
-        predict_data = clean_data(predict_data)
-        predict_data = generate_features(predict_data)
+        
         predict_string = predict_data[
         (predict_data['result'] != 0) & 
         (predict_data['result'] != '0') | 
