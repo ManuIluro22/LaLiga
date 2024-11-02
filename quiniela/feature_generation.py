@@ -48,7 +48,7 @@ class FeatureGenerator:
             on=['season', 'division', 'team'],
             how='left'
         )
-        self._fill_missing_ranks(quiniela_df,n)
+        self._fill_missing_ranks(quiniela_df)
 
 
     def _fill_missing_ranks(self,quiniela_df):
