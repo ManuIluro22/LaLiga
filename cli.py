@@ -86,9 +86,13 @@ if __name__ == "__main__":
         logging.info(f"Predicting matchday {args.matchday} in season {args.season}, division {args.division}")
         model = models.QuinielaModel.load(settings.MODELS_PATH / args.model_name)
         predict_data = io.load_matchday(args.season, args.division, args.matchday)
+        print("-" * 40, "\nData successfully loaded and processed.\n", "-" * 40)
+        #print("-" * 40)
+        print(predict_data.head())
         predict_data['pred'] = model.predict(predict_data)
         print(f"Matchday {args.matchday} - LaLiga - Division {args.division} - Season {args.season}")
         print("=" * 70)
         for _, row in predict_data.iterrows():
             print(f"{row['home_team']:^30s} vs {row['away_team']:^30s} --> {row['pred']}")
-        io.save_predictions(predict_data)
+        #io.save_predictions(predict_data)
+        
