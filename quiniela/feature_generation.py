@@ -149,5 +149,21 @@ class FeatureGenerator:
         matchday_df.df["avg_home_goals_total"] = (matchday_df.df["home_total_avg_GF"] + matchday_df.df["away_total_avg_GA"]) / 2
         matchday_df.df["avg_away_goals_total"] = (matchday_df.df["away_total_avg_GF"] + matchday_df.df["home_total_avg_GA"]) / 2
         matchday_df.df["dif_previous_ranks"] = matchday_df.df["home_rank_5_last_seasons"] - matchday_df.df["away_rank_5_last_seasons"]
+        
+        matchday_df.df = matchday_df.df.groupby(['home_team', 'away_team'], group_keys=False).apply(self._calculate_H2H_stats)
 
         matchday_df.df.fillna(0)
+
+
+
+    def _calculate_H2H_stats(self, matches):
+        matches = matches.sort_values('season')
+
+        # Calculate rolling cumulative stats for the previous 10 matches
+        matches['H2H_wins_home_last_10'] = (matches['home_team'] == matches['home_team'].iloc[0]) * matches['home_W'].shift().rolling(window=10, min_periods=0).sum()
+        matches['H2H_wins_away_last_10'] = (matches['away_team'] == matches['away_team'].iloc[0]) * matches['home_L'].shift().rolling(window=10, min_periods=0).sum()
+        matches['H2H_ties_last_10'] = matches['home_T'].shift().rolling(window=10, min_periods=0).sum()
+        matches['H2H_goals_home_last_10'] = (matches['home_team'] == matches['home_team'].iloc[0]) * matches['home_score'].shift().rolling(window=10, min_periods=0).sum()
+        matches['H2H_goals_away_last_10'] = (matches['away_team'] == matches['away_team'].iloc[0]) * matches['away_score'].shift().rolling(window=10, min_periods=0).sum()
+
+        return matches
