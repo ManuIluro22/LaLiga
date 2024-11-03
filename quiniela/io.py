@@ -3,13 +3,15 @@ import pandas as pd
 import settings
 from quiniela.structure import LaLigaDataframe
 
+
 def load_matchday(season, division, matchday):
+
     print(f"Loading matchday {matchday} in season {season}, division {division}...")
 
     actual_season = int(season[-4:])
     prev_10_season = int(season[-4:])-10
     seasons_tuple = tuple(f"{year}-{year + 1}" for year in range(prev_10_season, actual_season))    
-    
+
     with sqlite3.connect(settings.DATABASE_PATH) as conn:
         data = pd.read_sql(f"""
                 SELECT * FROM Matches
@@ -17,20 +19,17 @@ def load_matchday(season, division, matchday):
             """, conn)
     if data.empty:
         raise ValueError("There is no matchday data for the values given")
-    
+
     master = LaLigaDataframe(data.copy())
-
-
     master.generate_features()
     final = master.generate_matchday_dataframe()
 
     predict_data = final.df.loc[
-       (final.df.season == actual_season) & 
+       (final.df.season == actual_season) &
        (final.df.division == division) &
        (final.df.matchday == matchday)]
-    
-    return predict_data
 
+    return predict_data
 
 
 def load_historical_data(seasons):
