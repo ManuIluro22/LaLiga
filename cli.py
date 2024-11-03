@@ -104,8 +104,7 @@ if __name__ == "__main__":
         print(f"Matchday {args.matchday} - LaLiga - Division {args.division} - Season {args.season}")
         print("=" * 95)
         for _, row in predict_data.iterrows():
-            print(f"{row['home_team']:^30s} vs {row['away_team']:^30s} --> {row['pred']} \
-                  --- confidence: {row['confidence']*100:.2f}%")
+            print(f"{row['home_team']:^30s} vs {row['away_team']:^30s} --> {row['pred']} --- confidence: {row['confidence']*100:.2f}%")
 
         data_to_save = predict_data[["season",
                                      "division",
