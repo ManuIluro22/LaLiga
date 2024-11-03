@@ -4,10 +4,7 @@ import argparse
 from datetime import datetime
 import pandas as pd
 import settings
-from quiniela import data_preprocessing, models, io
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.preprocessing import LabelEncoder
-from quiniela.structure import LaLigaDataframe
+from quiniela import models, io
 from warnings import simplefilter
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
@@ -99,6 +96,7 @@ if __name__ == "__main__":
         predict_data = io.load_matchday(args.season, args.division, args.matchday)
         
         prediction, probability = loaded_model.predict(predict_data)
+
         predict_data["pred"] = prediction
         predict_data["confidence"] = probability
 
