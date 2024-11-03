@@ -6,8 +6,7 @@ from quiniela.structure import LaLigaDataframe
 
 def load_matchday(season, division, matchday):
 
-    print(f"Loading matchday {matchday} +\
-          in season {season}, division {division}...")
+    print(f"Loading matchday {matchday} in season {season}, division {division}...")
 
     actual_season = int(season[-4:])
     prev_10_season = int(season[-4:])-10
