@@ -8,6 +8,7 @@ from quiniela import models, io
 from warnings import simplefilter
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
+
 def parse_seasons(value):
     if value == "all":
         return "all"
@@ -106,5 +107,10 @@ if __name__ == "__main__":
             print(f"{row['home_team']:^30s} vs {row['away_team']:^30s} --> {row['pred']} \
                   --- confidence: {row['confidence']*100:.2f}%")
 
-        data_to_save = predict_data[["season","division","matchday","home_team","away_team","pred"]]
+        data_to_save = predict_data[["season",
+                                     "division",
+                                     "matchday",
+                                     "home_team",
+                                     "away_team",
+                                     "pred"]]
         io.save_predictions(data_to_save)
