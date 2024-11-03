@@ -35,6 +35,7 @@ class LaLigaDataframe:
         """
 
         self.df = dataframe
+        self._fix_team_names()
         self._clean_data()
         self._generate_team_info()
 
@@ -58,6 +59,50 @@ class LaLigaDataframe:
             structured matchday data.
         """
         return MatchdayDataframe(self)
+
+    def _fix_team_names(self):
+        """
+        Fixes the names of the teams that changed name through different
+        seasons, so they have an unique name in the dataset.
+        """
+        self.df['home_team'] = self.df['home_team'].apply(
+            lambda x: 'Atlético Madrid' if x == 'Athletic Madrid'
+            else 'Real Sociedad' if x == 'Donostia'
+            else 'CE Europa' if x == 'Catalunya'
+            else 'Atlético Madrid' if x == 'Ath. Aviación'
+            else 'Atlético Madrid' if x == 'Atl. Aviación'
+            else 'UE Lleida' if x == 'Lérida'
+            else 'UD Almería' if x == 'AD Almería'
+            else 'Sporting Gijón' if x == 'Real Gijón'
+            else 'Gimnàstic' if x == 'Gimnástica'
+            else 'Ciudad Murcia' if x == 'Granada 74 CF'
+            else 'UD Las Palmas' if x == 'Uni. Las Palmas'
+            else 'Racing Ferrol' if x == 'Ferrol'
+            else 'Terrassa FC' if x == 'Tarrasa'
+            else 'Barcelona B' if x == 'Barcelona Atl.'
+            else 'RM Castilla' if x == 'Castilla CF'
+            else x
+            )
+
+        self.df['away_team'] = self.df['away_team'].apply(
+            lambda x: 'Atlético Madrid'
+            if x == 'Athletic Madrid'
+            else 'Real Sociedad' if x == 'Donostia'
+            else 'CE Europa' if x == 'Catalunya'
+            else 'Atlético Madrid' if x == 'Ath. Aviación'
+            else 'Atlético Madrid' if x == 'Atl. Aviación'
+            else 'UE Lleida' if x == 'Lérida'
+            else 'UD Almería' if x == 'AD Almería'
+            else 'Sporting Gijón' if x == 'Real Gijón'
+            else 'Gimnàstic' if x == 'Gimnástica'
+            else 'Ciudad Murcia' if x == 'Granada 74 CF'
+            else 'UD Las Palmas' if x == 'Uni. Las Palmas'
+            else 'Racing Ferrol' if x == 'Ferrol'
+            else 'Terrassa FC' if x == 'Tarrasa'
+            else 'Barcelona B' if x == 'Barcelona Atl.'
+            else 'RM Castilla' if x == 'Castilla CF'
+            else x
+            )
 
     def _clean_data(self):
         """
