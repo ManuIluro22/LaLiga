@@ -193,7 +193,7 @@ class FeatureGenerator:
                       'division',
                       'team'])['result']
             .apply(lambda x: np.array(
-                [np.array(rolling_list) for rolling_list in x.rolling(5)], 
+                [np.array(rolling_list) for rolling_list in x.rolling(5)],
                 dtype=object)))
 
         last_results = (
@@ -201,9 +201,15 @@ class FeatureGenerator:
                 last_results.values)
               .reshape(-1))
 
-        quiniela_df.match_standings.sort_values(['season', 'division', 'team', 'matchday'], inplace=True)
+        quiniela_df.match_standings.sort_values(['season',
+                                                 'division',
+                                                 'team',
+                                                 'matchday'], inplace=True)
+
         quiniela_df.match_standings.reset_index(inplace=True)
-        quiniela_df.match_standings["avg_5_last_points"] = (pd.Series(last_results).apply(self._calculate_avg_points))
+        quiniela_df.match_standings["avg_5_last_points"] = (
+            pd.Series(last_results).apply(self._calculate_avg_points)
+        )
 
     def _calculate_avg_points(self, last_n):
         """
@@ -216,65 +222,108 @@ class FeatureGenerator:
             float: The average points scored from the results.
         """
         points = {'W': 3, 'T': 1, 'L': 0}
-        total_points = np.mean([points[res] for res in last_n if res in points])
+        total_points = (
+            np.mean([points[res] for res in last_n if res in points])
+        )
         return total_points if len(last_n) > 0 else 0
-    
-    def _versus_features(self,matchday_df):
+
+    def _versus_features(self, matchday_df):
         """
-        Generates comparative features between home and away teams for each matchday.
+        Generates comparative features between home and away teams
+        for each matchday.
 
         Args:
-            matchday_df (MatchdayDataframe): An instance containing matchday-specific data.
-        """        
-        matchday_df.df["dif_rank"] = (matchday_df.df["home_rank"] - 
-                                      matchday_df.df["away_rank"])
-        matchday_df.df["expected_home_goals"] = ((matchday_df
-                                                  .df["home_GF_avg"] + 
-                                                  matchday_df.df["away_GA_avg"]) / 2)
-        matchday_df.df["expected_away_goals"] = ((matchday_df
-                                                  .df["away_GF_avg"] + 
-                                                  matchday_df.df["home_GA_avg"]) / 2)
-        matchday_df.df["dif_last_5_points"] = (matchday_df
-                                               .df[f"home_avg_points_last_5"] - 
-                                               matchday_df.df[f"away_avg_points_last_5"])
-        matchday_df.df["avg_home_goals_total"] = ((matchday_df
-                                                   .df["home_total_avg_GF"] + 
-                                                   matchday_df
-                                                   .df["away_total_avg_GA"]) / 2)
-        matchday_df.df["avg_away_goals_total"] = ((matchday_df
-                                                   .df["away_total_avg_GF"] + 
-                                                   matchday_df
-                                                   .df["home_total_avg_GA"]) / 2)
-        matchday_df.df["dif_previous_5_ranks"] = (matchday_df
-                                                  .df[f"home_rank_5_last_seasons"] - 
-                                                  matchday_df.df[f"away_rank_5_last_seasons"])
-        
-        matchday_df.df = (matchday_df
-                          .df.groupby(['home_team',
-                                       'away_team'],
-                                    group_keys=False).apply(
-                                    self._calculate_H2H_stats))
+            matchday_df (MatchdayDataframe): An instance containing
+            matchday-specific data.
+        """
+        matchday_df.df["dif_rank"] = (
+            matchday_df.df["home_rank"] -
+            matchday_df.df["away_rank"]
+        )
+        matchday_df.df["expected_home_goals"] = (
+            (matchday_df.df["home_GF_avg"] +
+             matchday_df.df["away_GA_avg"]) / 2
+        )
+        matchday_df.df["expected_away_goals"] = (
+            (matchday_df.df["away_GF_avg"] +
+             matchday_df.df["home_GA_avg"]) / 2
+        )
+        matchday_df.df["dif_last_5_points"] = (
+            matchday_df.df["home_avg_points_last_5"] -
+            matchday_df.df["away_avg_points_last_5"]
+        )
+        matchday_df.df["avg_home_goals_total"] = (
+            (matchday_df.df["home_total_avg_GF"] +
+             matchday_df.df["away_total_avg_GA"]) / 2
+        )
+        matchday_df.df["avg_away_goals_total"] = (
+            (matchday_df.df["away_total_avg_GF"] +
+             matchday_df.df["home_total_avg_GA"]) / 2
+        )
+        matchday_df.df["dif_previous_5_ranks"] = (
+            matchday_df.df["home_rank_5_last_seasons"] -
+            matchday_df.df["away_rank_5_last_seasons"]
+        )
+        matchday_df.df = (
+            matchday_df.df
+            .groupby(['home_team',
+                      'away_team'],
+                     group_keys=False)
+            .apply(self._calculate_H2H_stats)
+        )
 
         matchday_df.df.fillna(0, inplace=True)
 
     def _calculate_H2H_stats(self, matches):
         """
-        Calculates head-to-head (H2H) statistics for the last n matches between two teams, 
-        based on historical match data. The statistics generated include the number of wins, ties, 
-        and goals for both home and away teams over the previous 10 encounters.
+        Calculates head-to-head (H2H) statistics for the last n matches
+        between two teams, based on historical match data. The statistics
+        generated include the number of wins, ties, and goals for both
+        home and away teams over the previous 10 encounters.
 
         Args:
-        matches (DataFrame): A Pandas DataFrame containing historical match data. 
+        matches (DataFrame): A Pandas DataFrame containing historical
+        match data.
 
         Returns:
-        matches (DataFrame): The original DataFrame with additional columns for H2H statistics:
+        matches (DataFrame): The original DataFrame with additional columns
+        for H2H statistics:
         """
         matches = matches.sort_values('season')
 
-        matches['H2H_wins_home_last_10'] = (matches['home_team'] == matches['home_team'].iloc[0]) * matches['home_W'].shift().rolling(window=10, min_periods=0).sum()
-        matches['H2H_wins_away_last_10'] = (matches['away_team'] == matches['away_team'].iloc[0]) * matches['home_L'].shift().rolling(window=10, min_periods=0).sum()
-        matches['H2H_ties_last_10'] = matches['home_T'].shift().rolling(window=10, min_periods=0).sum()
-        matches['H2H_goals_home_last_10'] = (matches['home_team'] == matches['home_team'].iloc[0]) * matches['home_score'].shift().rolling(window=10, min_periods=0).sum()
-        matches['H2H_goals_away_last_10'] = (matches['away_team'] == matches['away_team'].iloc[0]) * matches['away_score'].shift().rolling(window=10, min_periods=0).sum()
+        matches['H2H_wins_home_last_10'] = (
+            (matches['home_team'] == matches['home_team'].iloc[0]) *
+            (matches['home_W']
+             .shift()
+             .rolling(window=10, min_periods=0)
+             .sum())
+        )
+        matches['H2H_wins_away_last_10'] = (
+            (matches['away_team'] == matches['away_team'].iloc[0]) *
+            (matches['home_L']
+             .shift()
+             .rolling(window=10, min_periods=0)
+             .sum())
+        )
+        matches['H2H_ties_last_10'] = (
+            (matches['home_T']
+             .shift()
+             .rolling(window=10, min_periods=0)
+             .sum())
+        )
+        matches['H2H_goals_home_last_10'] = (
+            (matches['home_team'] == matches['home_team'].iloc[0]) *
+            (matches['home_score']
+             .shift()
+             .rolling(window=10, min_periods=0)
+             .sum())
+        )
+        matches['H2H_goals_away_last_10'] = (
+            (matches['away_team'] == matches['away_team'].iloc[0]) *
+            (matches['away_score']
+             .shift()
+             .rolling(window=10, min_periods=0)
+             .sum())
+        )
 
         return matches
