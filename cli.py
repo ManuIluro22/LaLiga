@@ -90,8 +90,11 @@ if __name__ == "__main__":
 
     if args.task == "predict":
         logging.info(f"Predicting matchday {args.matchday} in season {args.season}, division {args.division}")
-        loaded_model = models.QuinielaModel.load(settings.MODELS_PATH / args.model_name)
         
+        try:
+            loaded_model = models.QuinielaModel.load(settings.MODELS_PATH / args.model_name)
+        except FileNotFoundError:
+            raise ValueError(f"The module with {args.model_name} name is not found")
 
         predict_data = io.load_matchday(args.season, args.division, args.matchday)
         
@@ -102,7 +105,8 @@ if __name__ == "__main__":
         print(f"Matchday {args.matchday} - LaLiga - Division {args.division} - Season {args.season}")
         print("=" * 95)
         for _, row in predict_data.iterrows():
-            print(f"{row['home_team']:^30s} vs {row['away_team']:^30s} --> {row['pred']} --- confidence: {row['confidence']*100:.2f}%")
+            print(f"{row['home_team']:^30s} vs {row['away_team']:^30s} --> {row['pred']} \
+                  --- confidence: {row['confidence']*100:.2f}%")
 
         data_to_save = predict_data[["season","division","matchday","home_team","away_team","pred"]]
         io.save_predictions(data_to_save)
