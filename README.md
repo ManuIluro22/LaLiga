@@ -54,9 +54,10 @@ Matchday 25 - LaLiga - Division 1 - Season 2020-2021
          Real Madrid           vs         Real Sociedad          --> 1 --- confidence: 41.74%
            SD Eibar            vs           SD Huesca            --> X --- confidence: 35.23%
           Sevilla FC           vs           Barcelona            --> 2 --- confidence: 39.82%
-          Villarreal           vs        Atlético Madrid         --> 2 --- confidence: 41.44%```
+          Villarreal           vs        Atlético Madrid         --> 2 --- confidence: 41.44%
+```
 
-Here, we call ```train``` to train the model using seasons from 2010 to 2020, and then we perfom a prediction of 3rd matchday of 2021-2022 season at 1st Division using ```predict```.
+Here, we call ```train``` to train the model using seasons from 2010 to 2020, and then we perfom a prediction of 3rd matchday of 2021-2022 season at 1st Division using ```predict```. We can see that apart from the prediction, it also shows how much confident is the model on it.
 
 Check out options on ```train``` and ```predict``` using ```-h``` option. You are free to add any other argument that you find necessary.
 
