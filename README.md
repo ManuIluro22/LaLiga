@@ -36,7 +36,7 @@ quiniela/
 
 ### How to run it
 
-You are provided with a fully-functional dummy model. Once you've installed dependences (```pip install -r requirements.txt```), which is only Pandas in this dummy case, you can try it yourself:
+Down below you can see an output snip. Once you've installed dependences (```pip install -r requirements.txt```) you can try it yourself:
 
 ```console
 user@user:~/RI/laliga/la-quiniela$ python3 cli.py train --training_seasons 2005:2020 --model_name gbc_long
@@ -57,9 +57,9 @@ Matchday 25 - LaLiga - Division 1 - Season 2020-2021
           Villarreal           vs        Atlético Madrid         --> 2 --- confidence: 41.44%
 ```
 
-Here, we call ```train``` to train the model using seasons from 2010 to 2020, and then we perfom a prediction of 3rd matchday of 2021-2022 season at 1st Division using ```predict```. We can see that apart from the prediction, it also shows how much confident is the model on it.
+Here, we call ```train``` to train the model using seasons from 2005 to 2020, and then we perfom a prediction of 25th matchday of 2021-2022 season at 1st Division using ```predict```. We can see that apart from the prediction, it also shows how much confident is the model on it.
 
-Check out options on ```train``` and ```predict``` using ```-h``` option. You are free to add any other argument that you find necessary.
+Check out options on ```train``` and ```predict``` using ```-h``` option.
 
 ### Data
 
