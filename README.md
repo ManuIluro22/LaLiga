@@ -39,24 +39,24 @@ quiniela/
 You are provided with a fully-functional dummy model. Once you've installed dependences (```pip install -r requirements.txt```), which is only Pandas in this dummy case, you can try it yourself:
 
 ```console
-foo@bar:~$ python cli.py train --training_seasons 2010:2020
-Model succesfully trained and saved in ./models/my_quiniela.model
-foo@bar:~$ python cli.py predict 2021-2022 1 3
-Matchday 3 - LaLiga - Division 1 - Season 2021-2022
-======================================================================
-         RCD Mallorca          vs            Espanyol            --> X
-           Valencia            vs             Alavés             --> X
-        Celta de Vigo          vs            Athletic            --> X
-        Real Sociedad          vs            Levante             --> X
-           Elche CF            vs           Sevilla FC           --> X
-          Real Betis           vs          Real Madrid           --> X
-          Barcelona            vs             Getafe             --> X
-           Cádiz CF            vs           CA Osasuna           --> X
-        Rayo Vallecano         vs           Granada CF           --> X
-       Atlético Madrid         vs           Villarreal           --> X
-```
+user@user:~/RI/laliga/la-quiniela$ python3 cli.py train --training_seasons 2005:2020 --model_name gbc_long
+Model succesfully trained and saved in /home/manu/RI/laliga/la-quiniela/models/gbc_long
+user@user:~/RI/laliga/la-quiniela$ python cli.py predict 2020-2021 1 25 --model_name gbc_long
+Loading matchday 25 in season 2020-2021, division 1...
+Matchday 25 - LaLiga - Division 1 - Season 2020-2021
+===============================================================================================
+            Alavés             vs           CA Osasuna           --> X --- confidence: 36.70%
+        Celta de Vigo          vs        Real Valladolid         --> 1 --- confidence: 34.54%
+           Cádiz CF            vs           Real Betis           --> X --- confidence: 34.86%
+            Getafe             vs            Valencia            --> 2 --- confidence: 34.42%
+          Granada CF           vs            Elche CF            --> 1 --- confidence: 35.61%
+           Levante             vs            Athletic            --> X --- confidence: 33.66%
+         Real Madrid           vs         Real Sociedad          --> 1 --- confidence: 41.74%
+           SD Eibar            vs           SD Huesca            --> X --- confidence: 35.23%
+          Sevilla FC           vs           Barcelona            --> 2 --- confidence: 39.82%
+          Villarreal           vs        Atlético Madrid         --> 2 --- confidence: 41.44%```
 
-Here, we call ```train``` to train the model using seasons from 2010 to 2020, and then we perfom a prediction of 3rd matchday of 2021-2022 season at 1st Division using ```predict```. Of course, that's a terrible prediction: that's why it's a dummy model!! Call to ```train``` did literally nothing, and ```predict``` always return ```X ```. It is your job to make something interesting.
+Here, we call ```train``` to train the model using seasons from 2010 to 2020, and then we perfom a prediction of 3rd matchday of 2021-2022 season at 1st Division using ```predict```.
 
 Check out options on ```train``` and ```predict``` using ```-h``` option. You are free to add any other argument that you find necessary.
 
