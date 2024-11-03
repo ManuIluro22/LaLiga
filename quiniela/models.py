@@ -5,7 +5,6 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
 
-
 class QuinielaModel:
     """
     A class responsible for handling the training and prediction for Quiniela
