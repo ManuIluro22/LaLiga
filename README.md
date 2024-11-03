@@ -1,6 +1,10 @@
 ## LaQuiniela of LaLiga
 
-Team members: Manuel Arnau Fernández - Pere Bancells i Blazquez - Harry Wolimba Hall Hall - Jordi Ren
+Team members: 
+Manuel Arnau Fernández - NIU: 1597487
+Pere Bancells i Blazquez - NIU: 1563650
+Harry Wolimba Hall - NIU: 1733432
+Jordi Ren - NIU: 1739708
 
 This repo contains the skeleton for you to build your first ML project. Use the data in ```laliga.sqlite``` to build a ML model that predicts the outcome of a matchday in LaLiga (Spanish Football League).
 
